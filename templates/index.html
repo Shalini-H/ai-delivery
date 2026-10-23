@@ -392,65 +392,6 @@
             </p>
         </div>
 
-        <!-- Section 4: Mam's Presentation & Viva Voce Guide (Accordion) -->
-        <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-base">Mam's Viva & Presentation Guide</h3>
-                        <p class="text-xs text-slate-400">Quick answers to key technical questions your teacher or evaluator might ask</p>
-                    </div>
-                </div>
-                <span class="text-xs bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-1 rounded-full font-semibold">
-                    Experiential Learning Viva
-                </span>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
-                    <h5 class="font-bold text-blue-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-question"></i> Q1: Why use Regression instead of Classification?
-                    </h5>
-                    <p class="text-slate-300 leading-relaxed">
-                        Because delivery time is a <strong>continuous numerical quantity</strong> (e.g. 45.2 minutes, 1.3 hours) rather than discrete classes. Regression estimates the exact continuous duration, allowing precise ETA scheduling for logistics operations.
-                    </p>
-                </div>
-
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
-                    <h5 class="font-bold text-emerald-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-question"></i> Q2: Why does Random Forest outperform Linear Regression?
-                    </h5>
-                    <p class="text-slate-300 leading-relaxed">
-                        Real-world delivery has <strong>non-linear and compound effects</strong>: a 10 km trip in a severe traffic jam during a storm is not simply additive; the delay multiplies exponentially. Decision tree ensembles capture these non-linear splits and feature interactions naturally, achieving a <strong>92.1% R² score</strong> vs 87.6% for Linear Regression.
-                    </p>
-                </div>
-
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
-                    <h5 class="font-bold text-amber-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-question"></i> Q3: What do MAE, RMSE, and R² Score tell us?
-                    </h5>
-                    <p class="text-slate-300 leading-relaxed">
-                        <strong>MAE (7.27 mins)</strong>: The average magnitude of error across all orders.
-                        <strong>RMSE (10.88 mins)</strong>: Penalizes large outlier errors more heavily.
-                        <strong>R² (0.921)</strong>: 92.1% of the total variance in delivery time is successfully explained by our model's features.
-                    </p>
-                </div>
-
-                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
-                    <h5 class="font-bold text-sky-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-circle-question"></i> Q4: How were categorical variables handled?
-                    </h5>
-                    <p class="text-slate-300 leading-relaxed">
-                        We used Scikit-learn's <code>ColumnTransformer</code> and <code>OneHotEncoder(drop='first')</code> to convert categorical variables (Weather, Traffic, Vehicle Type, Shipping Mode, Warehouse) into numeric binary vectors, preventing the "dummy variable trap", while scaling continuous values with <code>StandardScaler</code>.
-                    </p>
-                </div>
-
-            </div>
-        </div>
 
     </main>
 

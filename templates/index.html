@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Delivery Time Prediction | Logistics ML Demo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .gradient-border {
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            padding: 1px;
+            border-radius: 1rem;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .slider-thumb::-webkit-slider-thumb {
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-truck-fast text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                        LogiPredict AI
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Experiential Learning</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">AI-Based Delivery Time Prediction in Logistics Management</p>
+                </div>
+            </div>
+
+            <!-- Badges -->
+            <div class="flex items-center gap-2 text-xs">
+                <span class="px-3 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700/60 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Group 3: ML Regression
+                </span>
+                <span class="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/30 font-medium">
+                    <i class="fa-solid fa-robot mr-1"></i> Random Forest (92.1% R²) vs Linear Reg (87.6%)
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+
+        <!-- Hero Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-slate-900 p-6 md:p-8 border border-blue-500/20 shadow-2xl">
+            <div class="max-w-3xl space-y-3">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                    <i class="fa-solid fa-check-circle"></i> Live Working Demonstration
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                    Predicting Order Delivery Time using Supervised Machine Learning
+                </h2>
+                <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                    This system implements and benchmarks <strong class="text-blue-400">Linear Regression</strong> (baseline model) and <strong class="text-emerald-400">Random Forest Regressor</strong> (non-linear ensemble) on historical logistics parameters such as distance, traffic density, weather conditions, shipping tier, and vehicle mode.
+                </p>
+            </div>
+
+            <!-- Quick Preset Buttons -->
+            <div class="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center gap-2.5">
+                <span class="text-xs text-slate-400 font-medium mr-1"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Quick Test Scenarios:</span>
+                <button onclick="applyPreset('express')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    🏍️ Urban Express (5 km, Clear, Low Traffic)
+                </button>
+                <button onclick="applyPreset('rainy')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    🌧️ Rush-Hour Rain (22 km, Van, Stormy, High Traffic)
+                </button>
+                <button onclick="applyPreset('haul')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    🚛 Intercity Cargo (68 km, Truck, Foggy, Traffic Jam)
+                </button>
+            </div>
+        </div>
+
+        <!-- Two Column Layout: Interactive Input Form & Prediction Output -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- Left: Input Controls Form (5 cols) -->
+            <div class="lg:col-span-5 glass-panel rounded-2xl p-6 shadow-xl space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div class="flex items-center space-x-2.5">
+                        <i class="fa-solid fa-sliders text-blue-400 text-lg"></i>
+                        <h3 class="font-bold text-white text-base">Order & Logistics Parameters</h3>
+                    </div>
+                    <span class="text-xs text-slate-400">8 Input Features</span>
+                </div>
+
+                <form id="predictionForm" class="space-y-5">
+                    <!-- Feature 1: Distance (KM) Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-route text-blue-400"></i> Delivery Distance
+                            </label>
+                            <span id="distanceVal" class="text-xs font-bold text-blue-400 bg-blue-950 px-2 py-0.5 rounded border border-blue-800">18.5 km</span>
+                        </div>
+                        <input type="range" id="distance_km" name="distance_km" min="1.0" max="100.0" step="0.5" value="18.5"
+                               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                               oninput="document.getElementById('distanceVal').innerText = this.value + ' km'">
+                    </div>
+
+                    <!-- Feature 2: Prep Time (Min) Slider -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-box-open text-amber-400"></i> Prep / Packing Time
+                            </label>
+                            <span id="prepVal" class="text-xs font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-800">25 mins</span>
+                        </div>
+                        <input type="range" id="prep_time_min" name="prep_time_min" min="5" max="60" step="1" value="25"
+                               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                               oninput="document.getElementById('prepVal').innerText = this.value + ' mins'">
+                    </div>
+
+                    <!-- Feature 3: Package Weight (KG) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-weight-hanging text-indigo-400"></i> Package Weight
+                            </label>
+                            <span id="weightVal" class="text-xs font-bold text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800">3.5 kg</span>
+                        </div>
+                        <input type="range" id="package_weight_kg" name="package_weight_kg" min="0.5" max="30.0" step="0.5" value="3.5"
+                               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider-thumb"
+                               oninput="document.getElementById('weightVal').innerText = this.value + ' kg'">
+                    </div>
+
+                    <!-- Grid for Categorical Features -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Feature 4: Shipping Mode -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-paper-plane text-purple-400 mr-1"></i> Shipping Mode
+                            </label>
+                            <select id="shipping_mode" name="shipping_mode" class="w-full bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-700 p-2.5 focus:border-blue-500 focus:outline-none">
+                                <option value="Standard">Standard (Regular)</option>
+                                <option value="Express">Express (Priority)</option>
+                                <option value="Same-Day">Same-Day (Fast-Track)</option>
+                            </select>
+                        </div>
+
+                        <!-- Feature 5: Traffic Density -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-traffic-light text-rose-400 mr-1"></i> Traffic Density
+                            </label>
+                            <select id="traffic_level" name="traffic_level" class="w-full bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-700 p-2.5 focus:border-blue-500 focus:outline-none">
+                                <option value="Low">Low (Free Flow)</option>
+                                <option value="Medium" selected>Medium (Moderate)</option>
+                                <option value="High">High (Congested)</option>
+                                <option value="Jam">Jam (Severe Gridlock)</option>
+                            </select>
+                        </div>
+
+                        <!-- Feature 6: Weather Condition -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-cloud-sun-rain text-sky-400 mr-1"></i> Weather
+                            </label>
+                            <select id="weather" name="weather" class="w-full bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-700 p-2.5 focus:border-blue-500 focus:outline-none">
+                                <option value="Clear" selected>Clear / Sunny</option>
+                                <option value="Rainy">Rainy / Wet</option>
+                                <option value="Foggy">Foggy / Low Visibility</option>
+                                <option value="Stormy">Stormy / High Wind</option>
+                            </select>
+                        </div>
+
+                        <!-- Feature 7: Vehicle Type -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                                <i class="fa-solid fa-motorcycle text-emerald-400 mr-1"></i> Vehicle Type
+                            </label>
+                            <select id="vehicle_type" name="vehicle_type" class="w-full bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-700 p-2.5 focus:border-blue-500 focus:outline-none">
+                                <option value="Motorcycle" selected>Motorcycle (Agile)</option>
+                                <option value="Delivery Van">Delivery Van</option>
+                                <option value="Mini Truck">Mini Truck (Heavy)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Feature 8: Warehouse Hub -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            <i class="fa-solid fa-warehouse text-amber-400 mr-1"></i> Origin Hub / Warehouse
+                        </label>
+                        <select id="warehouse" name="warehouse" class="w-full bg-slate-800 text-slate-200 text-xs rounded-xl border border-slate-700 p-2.5 focus:border-blue-500 focus:outline-none">
+                            <option value="Hub-Central">Hub-Central (Downtown Distribution Center)</option>
+                            <option value="Hub-North">Hub-North (Airport Logistics Park)</option>
+                            <option value="Hub-South">Hub-South (Industrial Hub)</option>
+                            <option value="Hub-East">Hub-East (Suburban Port)</option>
+                            <option value="Hub-West">Hub-West (Metro Express Hub)</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="predictBtn"
+                            class="w-full py-3.5 px-4 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-500 hover:to-emerald-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Predict Delivery Time with AI</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right: Results & Prediction Display (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Side-by-Side Model Prediction Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Champion Model: Random Forest -->
+                    <div class="relative rounded-2xl p-5 border-2 border-emerald-500/40 bg-gradient-to-b from-emerald-950/40 via-slate-900 to-slate-900 shadow-xl overflow-hidden">
+                        <div class="absolute -top-3 right-4 px-3 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider rounded-full shadow-md">
+                            ★ Recommended (Best Fit)
+                        </div>
+                        <div class="flex items-center space-x-2 text-emerald-400 text-xs font-bold uppercase mb-2">
+                            <i class="fa-solid fa-tree"></i> Random Forest Regressor
+                        </div>
+                        <h4 class="text-xs text-slate-400 font-medium">Non-Linear Ensemble Model</h4>
+
+                        <div class="mt-4 flex items-baseline gap-2">
+                            <span id="rfTimeFormatted" class="text-3xl font-extrabold text-white tracking-tight">1 hr 8 min</span>
+                            <span id="rfMinutes" class="text-xs text-emerald-400 font-semibold">(68.2 mins)</span>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs space-y-2">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Estimated Arrival (ETA):</span>
+                                <span id="rfEta" class="font-bold text-slate-200">~09:48 PM</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Model Accuracy (R²):</span>
+                                <span class="font-bold text-emerald-400">92.1% (High Confidence)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Mean Error (MAE):</span>
+                                <span class="font-semibold text-slate-300">± 7.27 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Baseline Model: Linear Regression -->
+                    <div class="relative rounded-2xl p-5 border border-blue-500/30 bg-gradient-to-b from-blue-950/30 via-slate-900 to-slate-900 shadow-xl">
+                        <div class="flex items-center space-x-2 text-blue-400 text-xs font-bold uppercase mb-2">
+                            <i class="fa-solid fa-chart-line"></i> Linear Regression
+                        </div>
+                        <h4 class="text-xs text-slate-400 font-medium">Standard Parametric Baseline</h4>
+
+                        <div class="mt-4 flex items-baseline gap-2">
+                            <span id="lrTimeFormatted" class="text-3xl font-extrabold text-white tracking-tight">1 hr 14 min</span>
+                            <span id="lrMinutes" class="text-xs text-blue-400 font-semibold">(74.0 mins)</span>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs space-y-2">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Estimated Arrival (ETA):</span>
+                                <span id="lrEta" class="font-bold text-slate-200">~09:54 PM</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Model Accuracy (R²):</span>
+                                <span class="font-bold text-blue-400">87.6%</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Mean Error (MAE):</span>
+                                <span class="font-semibold text-slate-300">± 9.15 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Live Model Comparison Insight Banner -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex items-start gap-3.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <div class="text-xs space-y-1">
+                        <span class="font-bold text-amber-300 uppercase tracking-wide">AI Analysis & Comparison Insight:</span>
+                        <p id="comparisonExplanation" class="text-slate-300 leading-relaxed">
+                            Prediction difference between models is <strong id="predDiff" class="text-white">5.8 minutes</strong>. Random Forest captures non-linear interaction terms (e.g., severe traffic multiplied by rainy weather and motorcycle drag) that simple linear regression cannot fully capture.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Model Evaluation Metrics Scorecard -->
+                <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-blue-400"></i> Model Evaluation Metrics Table (Test Set: 600 Records)
+                    </h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-800">
+                                    <th class="pb-2 font-semibold">Algorithm</th>
+                                    <th class="pb-2 font-semibold">Mean Absolute Error (MAE)</th>
+                                    <th class="pb-2 font-semibold">Root Mean Squared Error (RMSE)</th>
+                                    <th class="pb-2 font-semibold">R² Score (Variance Explained)</th>
+                                    <th class="pb-2 font-semibold">Verdict</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60 font-medium">
+                                <tr class="text-slate-200">
+                                    <td class="py-2.5 flex items-center gap-1.5 font-bold text-blue-400">
+                                        <i class="fa-solid fa-chart-line"></i> Linear Regression
+                                    </td>
+                                    <td class="py-2.5 text-slate-300">9.15 mins</td>
+                                    <td class="py-2.5 text-slate-300">13.64 mins</td>
+                                    <td class="py-2.5 text-blue-400 font-bold">0.8761 (87.6%)</td>
+                                    <td class="py-2.5 text-slate-400">Baseline</td>
+                                </tr>
+                                <tr class="text-slate-200 bg-emerald-950/20">
+                                    <td class="py-2.5 flex items-center gap-1.5 font-bold text-emerald-400">
+                                        <i class="fa-solid fa-tree"></i> Random Forest
+                                    </td>
+                                    <td class="py-2.5 text-emerald-300 font-bold">7.27 mins <span class="text-[10px] text-emerald-400 font-normal">(-20.5% error)</span></td>
+                                    <td class="py-2.5 text-emerald-300 font-bold">10.88 mins</td>
+                                    <td class="py-2.5 text-emerald-400 font-extrabold">0.9213 (92.1%)</td>
+                                    <td class="py-2.5"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">Winner</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Section 3: High-Resolution EDA & Model Visualization Gallery -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
+            <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h3 class="font-bold text-white text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-emerald-400"></i>
+                        Exploratory Data Analysis & Model Visualization Charts
+                    </h3>
+                    <p class="text-xs text-slate-400">Generated directly from model evaluation scripts on the 3,000 shipment dataset</p>
+                </div>
+                <!-- Chart Switcher Tabs -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="showChart('actual_vs_predicted')" id="tab_actual_vs_predicted" class="chart-tab px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium transition">
+                        Actual vs Predicted
+                    </button>
+                    <button onclick="showChart('feature_importance')" id="tab_feature_importance" class="chart-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition">
+                        Feature Importance
+                    </button>
+                    <button onclick="showChart('correlation_heatmap')" id="tab_correlation_heatmap" class="chart-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition">
+                        Correlation Heatmap
+                    </button>
+                    <button onclick="showChart('traffic_weather_impact')" id="tab_traffic_weather_impact" class="chart-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition">
+                        Traffic & Weather Impact
+                    </button>
+                    <button onclick="showChart('model_comparison')" id="tab_model_comparison" class="chart-tab px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium transition">
+                        Metrics Comparison
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chart Viewer Display -->
+            <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 text-center flex items-center justify-center min-h-[420px]">
+                <img id="activeChartImg" src="/static/charts/actual_vs_predicted.png" alt="Model Evaluation Plot" class="max-h-[500px] w-auto rounded-lg shadow-2xl border border-slate-800 mx-auto">
+            </div>
+            <p id="activeChartCaption" class="text-xs text-center text-slate-400">
+                Figure 1: Actual vs Predicted Delivery Time for Linear Regression vs Random Forest on 600 holdout test orders.
+            </p>
+        </div>
+
+        <!-- Section 4: Mam's Presentation & Viva Voce Guide (Accordion) -->
+        <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Mam's Viva & Presentation Guide</h3>
+                        <p class="text-xs text-slate-400">Quick answers to key technical questions your teacher or evaluator might ask</p>
+                    </div>
+                </div>
+                <span class="text-xs bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2.5 py-1 rounded-full font-semibold">
+                    Experiential Learning Viva
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <h5 class="font-bold text-blue-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-question"></i> Q1: Why use Regression instead of Classification?
+                    </h5>
+                    <p class="text-slate-300 leading-relaxed">
+                        Because delivery time is a <strong>continuous numerical quantity</strong> (e.g. 45.2 minutes, 1.3 hours) rather than discrete classes. Regression estimates the exact continuous duration, allowing precise ETA scheduling for logistics operations.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <h5 class="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-question"></i> Q2: Why does Random Forest outperform Linear Regression?
+                    </h5>
+                    <p class="text-slate-300 leading-relaxed">
+                        Real-world delivery has <strong>non-linear and compound effects</strong>: a 10 km trip in a severe traffic jam during a storm is not simply additive; the delay multiplies exponentially. Decision tree ensembles capture these non-linear splits and feature interactions naturally, achieving a <strong>92.1% R² score</strong> vs 87.6% for Linear Regression.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <h5 class="font-bold text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-question"></i> Q3: What do MAE, RMSE, and R² Score tell us?
+                    </h5>
+                    <p class="text-slate-300 leading-relaxed">
+                        <strong>MAE (7.27 mins)</strong>: The average magnitude of error across all orders.
+                        <strong>RMSE (10.88 mins)</strong>: Penalizes large outlier errors more heavily.
+                        <strong>R² (0.921)</strong>: 92.1% of the total variance in delivery time is successfully explained by our model's features.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-1.5">
+                    <h5 class="font-bold text-sky-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-question"></i> Q4: How were categorical variables handled?
+                    </h5>
+                    <p class="text-slate-300 leading-relaxed">
+                        We used Scikit-learn's <code>ColumnTransformer</code> and <code>OneHotEncoder(drop='first')</code> to convert categorical variables (Weather, Traffic, Vehicle Type, Shipping Mode, Warehouse) into numeric binary vectors, preventing the "dummy variable trap", while scaling continuous values with <code>StandardScaler</code>.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Interactive JavaScript -->
+    <script>
+        // Preset Scenarios
+        function applyPreset(scenario) {
+            if (scenario === 'express') {
+                document.getElementById('distance_km').value = 5.0;
+                document.getElementById('distanceVal').innerText = '5.0 km';
+                document.getElementById('prep_time_min').value = 12;
+                document.getElementById('prepVal').innerText = '12 mins';
+                document.getElementById('package_weight_kg').value = 1.5;
+                document.getElementById('weightVal').innerText = '1.5 kg';
+                document.getElementById('shipping_mode').value = 'Express';
+                document.getElementById('traffic_level').value = 'Low';
+                document.getElementById('weather').value = 'Clear';
+                document.getElementById('vehicle_type').value = 'Motorcycle';
+                document.getElementById('warehouse').value = 'Hub-Central';
+            } else if (scenario === 'rainy') {
+                document.getElementById('distance_km').value = 22.0;
+                document.getElementById('distanceVal').innerText = '22.0 km';
+                document.getElementById('prep_time_min').value = 35;
+                document.getElementById('prepVal').innerText = '35 mins';
+                document.getElementById('package_weight_kg').value = 8.0;
+                document.getElementById('weightVal').innerText = '8.0 kg';
+                document.getElementById('shipping_mode').value = 'Standard';
+                document.getElementById('traffic_level').value = 'High';
+                document.getElementById('weather').value = 'Stormy';
+                document.getElementById('vehicle_type').value = 'Delivery Van';
+                document.getElementById('warehouse').value = 'Hub-North';
+            } else if (scenario === 'haul') {
+                document.getElementById('distance_km').value = 68.0;
+                document.getElementById('distanceVal').innerText = '68.0 km';
+                document.getElementById('prep_time_min').value = 45;
+                document.getElementById('prepVal').innerText = '45 mins';
+                document.getElementById('package_weight_kg').value = 22.0;
+                document.getElementById('weightVal').innerText = '22.0 kg';
+                document.getElementById('shipping_mode').value = 'Standard';
+                document.getElementById('traffic_level').value = 'Jam';
+                document.getElementById('weather').value = 'Foggy';
+                document.getElementById('vehicle_type').value = 'Mini Truck';
+                document.getElementById('warehouse').value = 'Hub-South';
+            }
+            // Trigger prediction automatically
+            submitPrediction();
+        }
+
+        // Handle Form Submit
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitPrediction();
+        });
+
+        async function submitPrediction() {
+            const btn = document.getElementById('predictBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Calculating with Models...</span>';
+            btn.disabled = true;
+
+            const payload = {
+                distance_km: parseFloat(document.getElementById('distance_km').value),
+                prep_time_min: parseFloat(document.getElementById('prep_time_min').value),
+                package_weight_kg: parseFloat(document.getElementById('package_weight_kg').value),
+                shipping_mode: document.getElementById('shipping_mode').value,
+                traffic_level: document.getElementById('traffic_level').value,
+                weather: document.getElementById('weather').value,
+                vehicle_type: document.getElementById('vehicle_type').value,
+                warehouse: document.getElementById('warehouse').value
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+
+                if (res.status === 'success') {
+                    // Update Random Forest UI
+                    document.getElementById('rfTimeFormatted').innerText = res.random_forest.formatted;
+                    document.getElementById('rfMinutes').innerText = `(${res.random_forest.minutes} mins / ${res.random_forest.hours} hrs)`;
+                    document.getElementById('rfEta').innerText = `~${res.random_forest.eta}`;
+
+                    // Update Linear Regression UI
+                    document.getElementById('lrTimeFormatted').innerText = res.linear_regression.formatted;
+                    document.getElementById('lrMinutes').innerText = `(${res.linear_regression.minutes} mins / ${res.linear_regression.hours} hrs)`;
+                    document.getElementById('lrEta').innerText = `~${res.linear_regression.eta}`;
+
+                    // Update Comparison
+                    document.getElementById('predDiff').innerText = `${res.comparison.diff_minutes} minutes`;
+                    document.getElementById('comparisonExplanation').innerHTML = 
+                        `Prediction difference between models is <strong class="text-white">${res.comparison.diff_minutes} minutes</strong>. ` +
+                        res.comparison.explanation;
+                }
+            } catch (err) {
+                console.error("Prediction error:", err);
+            } finally {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            }
+        }
+
+        // Chart tab switcher
+        const chartCaptions = {
+            'actual_vs_predicted': 'Figure 1: Actual vs Predicted Delivery Time for Linear Regression vs Random Forest on 600 holdout test orders.',
+            'feature_importance': 'Figure 2: Top 10 most impactful features determining delivery time according to Random Forest Gini impurity reduction.',
+            'correlation_heatmap': 'Figure 3: Pearson correlation heatmap revealing relationships between distance, prep time, package weight, and delivery time.',
+            'traffic_weather_impact': 'Figure 4: Boxplots illustrating delivery time distributions across traffic congestion and weather conditions.',
+            'model_comparison': 'Figure 5: Benchmark bar chart showing MAE, RMSE, and R² scores for Linear Regression vs Random Forest.'
+        };
+
+        function showChart(chartName) {
+            document.getElementById('activeChartImg').src = `/static/charts/${chartName}.png`;
+            document.getElementById('activeChartCaption').innerText = chartCaptions[chartName];
+
+            // Update tab styles
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                tab.classList.remove('bg-blue-600', 'text-white');
+                tab.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            const activeTab = document.getElementById(`tab_${chartName}`);
+            activeTab.classList.remove('bg-slate-800', 'text-slate-300');
+            activeTab.classList.add('bg-blue-600', 'text-white');
+        }
+
+        // Auto-run on initial page load
+        window.onload = function() {
+            submitPrediction();
+        };
+    </script>
+</body>
+</html>

@@ -13,7 +13,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error, r2_score
 
@@ -26,7 +25,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 
 def train_and_evaluate():
     print("=" * 65, flush=True)
-    print("AI-BASED DELIVERY TIME PREDICTION - MODEL TRAINING & EVALUATION", flush=True)
+    print("AI-BASED DELIVERY TIME PREDICTION - RANDOM FOREST REGRESSOR", flush=True)
     print("=" * 65, flush=True)
 
     data_path = os.path.join('data', 'logistics_delivery_data.csv')
@@ -70,25 +69,8 @@ def train_and_evaluate():
     print(f"[+] Train set size: {X_train.shape[0]} samples", flush=True)
     print(f"[+] Test set size:  {X_test.shape[0]} samples", flush=True)
 
-    # 1. Model 1: Linear Regression
-    print("\n--- Training Model 1: Linear Regression ---", flush=True)
-    lr_pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('regressor', LinearRegression())
-    ])
-    lr_pipeline.fit(X_train, y_train)
-    lr_pred = lr_pipeline.predict(X_test)
-
-    lr_mae = mean_absolute_error(y_test, lr_pred)
-    lr_rmse = root_mean_squared_error(y_test, lr_pred)
-    lr_r2 = r2_score(y_test, lr_pred)
-
-    print(f"  Linear Regression MAE:  {lr_mae:.2f} mins")
-    print(f"  Linear Regression RMSE: {lr_rmse:.2f} mins")
-    print(f"  Linear Regression R2:   {lr_r2 * 100:.2f}%")
-
-    # 2. Model 2: Random Forest Regression
-    print("\n--- Training Model 2: Random Forest Regressor ---", flush=True)
+    # Training Random Forest Regression
+    print("\n--- Training Random Forest Regressor ---", flush=True)
     rf_pipeline = Pipeline([
         ('preprocessor', preprocessor),
         ('regressor', RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=1))
@@ -100,37 +82,38 @@ def train_and_evaluate():
     rf_rmse = root_mean_squared_error(y_test, rf_pred)
     rf_r2 = r2_score(y_test, rf_pred)
 
-    print(f"  Random Forest MAE:  {rf_mae:.2f} mins")
-    print(f"  Random Forest RMSE: {rf_rmse:.2f} mins")
-    print(f"  Random Forest R2:   {rf_r2 * 100:.2f}%")
+    print(f"  Random Forest MAE:  {rf_mae:.2f} mins", flush=True)
+    print(f"  Random Forest RMSE: {rf_rmse:.2f} mins", flush=True)
+    print(f"  Random Forest R2:   {rf_r2 * 100:.2f}%", flush=True)
 
-    # Comparison Table
-    print("\n" + "=" * 65)
-    print(f"{'Model Name':<28} | {'MAE (mins)':<12} | {'RMSE (mins)':<12} | {'R2 Score':<10}")
-    print("-" * 65)
-    print(f"{'Linear Regression':<28} | {lr_mae:<12.2f} | {lr_rmse:<12.2f} | {lr_r2:<10.4f}")
-    print(f"{'Random Forest Regressor':<28} | {rf_mae:<12.2f} | {rf_rmse:<12.2f} | {rf_r2:<10.4f}")
-    print("=" * 65)
+    # Performance Table
+    print("\n" + "=" * 65, flush=True)
+    print(f"{'Model Name':<28} | {'MAE (mins)':<12} | {'RMSE (mins)':<12} | {'R2 Score':<10}", flush=True)
+    print("-" * 65, flush=True)
+    print(f"{'Random Forest Regressor':<28} | {rf_mae:<12.2f} | {rf_rmse:<12.2f} | {rf_r2:<10.4f}", flush=True)
+    print("=" * 65, flush=True)
 
-    # Save Models and Artifacts
+    # Save Model and Metrics
     os.makedirs('models', exist_ok=True)
-    joblib.dump(lr_pipeline, os.path.join('models', 'linear_regression_model.pkl'))
-    joblib.dump(rf_pipeline, os.path.join('models', 'random_forest_model.pkl'))
-    print("\n[+] Trained models saved successfully in /models")
+    # Remove old linear regression model file if it exists
+    lr_file = os.path.join('models', 'linear_regression_model.pkl')
+    if os.path.exists(lr_file):
+        try:
+            os.remove(lr_file)
+        except Exception:
+            pass
 
-    # Save metrics JSON for the demo UI
+    joblib.dump(rf_pipeline, os.path.join('models', 'random_forest_model.pkl'))
+    print("\n[+] Trained Random Forest model saved successfully in /models", flush=True)
+
     metrics = {
-        'Linear Regression': {
-            'MAE': round(float(lr_mae), 2),
-            'RMSE': round(float(lr_rmse), 2),
-            'R2': round(float(lr_r2), 4),
-            'Accuracy_Pct': round(float(lr_r2 * 100), 1)
-        },
         'Random Forest Regressor': {
             'MAE': round(float(rf_mae), 2),
             'RMSE': round(float(rf_rmse), 2),
             'R2': round(float(rf_r2), 4),
-            'Accuracy_Pct': round(float(rf_r2 * 100), 1)
+            'Accuracy_Pct': round(float(rf_r2 * 100), 1),
+            'Estimators': 100,
+            'Max_Depth': 12
         },
         'Total_Samples': len(df),
         'Train_Samples': len(X_train),
@@ -141,34 +124,22 @@ def train_and_evaluate():
 
     # Generate Evaluation & EDA Plots
     os.makedirs(os.path.join('static', 'charts'), exist_ok=True)
-    generate_plots(df, y_test, lr_pred, rf_pred, rf_pipeline, preprocessor, num_features, cat_features)
+    generate_plots(df, y_test, rf_pred, rf_pipeline, preprocessor, num_features, cat_features)
 
     return metrics
 
-def generate_plots(df, y_test, lr_pred, rf_pred, rf_pipeline, preprocessor, num_features, cat_features):
-    print("\n[+] Generating high-resolution presentation charts...")
+def generate_plots(df, y_test, rf_pred, rf_pipeline, preprocessor, num_features, cat_features):
+    print("\n[+] Generating high-resolution presentation charts...", flush=True)
     sns.set_theme(style="whitegrid", palette="muted")
 
-    # Plot 1: Actual vs Predicted for Both Models
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
-
-    # Linear Regression scatter
-    axes[0].scatter(y_test, lr_pred, alpha=0.45, color='#3b82f6', edgecolor='none', s=25)
-    axes[0].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Prediction')
-    axes[0].set_title(f'Linear Regression (R² = {r2_score(y_test, lr_pred):.3f})', fontsize=13, fontweight='bold')
-    axes[0].set_xlabel('Actual Delivery Time (minutes)')
-    axes[0].set_ylabel('Predicted Delivery Time (minutes)')
-    axes[0].legend()
-
-    # Random Forest scatter
-    axes[1].scatter(y_test, rf_pred, alpha=0.45, color='#10b981', edgecolor='none', s=25)
-    axes[1].plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2, label='Perfect Prediction')
-    axes[1].set_title(f'Random Forest Regressor (R² = {r2_score(y_test, rf_pred):.3f})', fontsize=13, fontweight='bold')
-    axes[1].set_xlabel('Actual Delivery Time (minutes)')
-    axes[1].set_ylabel('Predicted Delivery Time (minutes)')
-    axes[1].legend()
-
-    plt.suptitle('Model Evaluation: Actual vs. Predicted Delivery Time', fontsize=15, fontweight='bold', y=1.02)
+    # Plot 1: Actual vs Predicted for Random Forest Regressor
+    plt.figure(figsize=(9, 6))
+    plt.scatter(y_test, rf_pred, alpha=0.45, color='#10b981', edgecolor='none', s=35)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2.2, label='Perfect Prediction (y = x)')
+    plt.title(f'Random Forest Regressor: Actual vs. Predicted Delivery Time\n(R² = {r2_score(y_test, rf_pred):.3f} | Accuracy = {r2_score(y_test, rf_pred)*100:.1f}%)', fontsize=13, fontweight='bold', pad=12)
+    plt.xlabel('Actual Delivery Time (minutes)', fontsize=11)
+    plt.ylabel('Predicted Delivery Time (minutes)', fontsize=11)
+    plt.legend(frameon=True)
     plt.tight_layout()
     plt.savefig(os.path.join('static', 'charts', 'actual_vs_predicted.png'), dpi=200, bbox_inches='tight')
     plt.close()
@@ -185,12 +156,12 @@ def generate_plots(df, y_test, lr_pred, rf_pred, rf_pipeline, preprocessor, num_
 
     # Plot 3: Traffic Level & Weather Impact on Delivery Time
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    sns.boxplot(ax=axes[0], data=df, x='Traffic_Level', y='Delivery_Time_Min', palette='Blues_r', order=['Low', 'Medium', 'High', 'Jam'])
+    sns.boxplot(ax=axes[0], data=df, x='Traffic_Level', y='Delivery_Time_Min', palette='Blues_r', order=['Low', 'Medium', 'High', 'Jam'], hue='Traffic_Level', legend=False)
     axes[0].set_title('Impact of Traffic Congestion on Delivery Time', fontsize=12, fontweight='bold')
     axes[0].set_ylabel('Delivery Time (minutes)')
     axes[0].set_xlabel('Traffic Density')
 
-    sns.boxplot(ax=axes[1], data=df, x='Weather', y='Delivery_Time_Min', palette='Purples_r', order=['Clear', 'Rainy', 'Foggy', 'Stormy'])
+    sns.boxplot(ax=axes[1], data=df, x='Weather', y='Delivery_Time_Min', palette='Purples_r', order=['Clear', 'Rainy', 'Foggy', 'Stormy'], hue='Weather', legend=False)
     axes[1].set_title('Impact of Weather Conditions on Delivery Time', fontsize=12, fontweight='bold')
     axes[1].set_ylabel('Delivery Time (minutes)')
     axes[1].set_xlabel('Weather Condition')
@@ -212,53 +183,49 @@ def generate_plots(df, y_test, lr_pred, rf_pred, rf_pipeline, preprocessor, num_
         fi_df = fi_df.sort_values(by='Importance', ascending=False).head(10)
 
         plt.figure(figsize=(10, 5))
-        sns.barplot(data=fi_df, x='Importance', y='Feature', palette='viridis')
+        sns.barplot(data=fi_df, x='Importance', y='Feature', palette='viridis', hue='Feature', legend=False)
         plt.title('Top 10 Feature Importances (Random Forest Model)', fontsize=13, fontweight='bold')
         plt.xlabel('Relative Importance Score')
         plt.tight_layout()
         plt.savefig(os.path.join('static', 'charts', 'feature_importance.png'), dpi=200, bbox_inches='tight')
         plt.close()
     except Exception as e:
-        print(f"[-] Could not plot feature importances: {e}")
+        print(f"[-] Could not plot feature importances: {e}", flush=True)
 
-    # Plot 5: Model Comparison Bar Chart (MAE, RMSE, R2)
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
-    models = ['Linear Reg', 'Random Forest']
+    # Plot 5: Model Evaluation Performance Cards / Metrics
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
     
-    # MAE
-    lr_m = mean_absolute_error(y_test, lr_pred)
     rf_m = mean_absolute_error(y_test, rf_pred)
-    axes[0].bar(models, [lr_m, rf_m], color=['#3b82f6', '#10b981'], width=0.5)
+    rf_r = root_mean_squared_error(y_test, rf_pred)
+    rf_score = r2_score(y_test, rf_pred)
+
+    # MAE
+    axes[0].bar(['Random Forest'], [rf_m], color=['#10b981'], width=0.4)
     axes[0].set_title('Mean Absolute Error (MAE)\n(Lower is Better)', fontweight='bold')
     axes[0].set_ylabel('Minutes')
-    for i, v in enumerate([lr_m, rf_m]):
-        axes[0].text(i, v + 0.5, f"{v:.2f} m", ha='center', fontweight='bold')
+    axes[0].text(0, rf_m + 0.3, f"{rf_m:.2f} mins", ha='center', fontweight='bold', fontsize=12)
+    axes[0].set_ylim(0, rf_m * 1.35)
 
     # RMSE
-    lr_r = root_mean_squared_error(y_test, lr_pred)
-    rf_r = root_mean_squared_error(y_test, rf_pred)
-    axes[1].bar(models, [lr_r, rf_r], color=['#3b82f6', '#10b981'], width=0.5)
+    axes[1].bar(['Random Forest'], [rf_r], color=['#059669'], width=0.4)
     axes[1].set_title('Root Mean Squared Error (RMSE)\n(Lower is Better)', fontweight='bold')
     axes[1].set_ylabel('Minutes')
-    for i, v in enumerate([lr_r, rf_r]):
-        axes[1].text(i, v + 0.5, f"{v:.2f} m", ha='center', fontweight='bold')
+    axes[1].text(0, rf_r + 0.4, f"{rf_r:.2f} mins", ha='center', fontweight='bold', fontsize=12)
+    axes[1].set_ylim(0, rf_r * 1.35)
 
     # R2 Score
-    lr_score = r2_score(y_test, lr_pred)
-    rf_score = r2_score(y_test, rf_pred)
-    axes[2].bar(models, [lr_score, rf_score], color=['#3b82f6', '#10b981'], width=0.5)
-    axes[2].set_title('R² Score (Accuracy fit)\n(Higher is Better)', fontweight='bold')
+    axes[2].bar(['Random Forest'], [rf_score], color=['#3b82f6'], width=0.4)
+    axes[2].set_title('R² Score (Model Fit Accuracy)\n(Higher is Better)', fontweight='bold')
     axes[2].set_ylabel('Score (0 to 1)')
-    axes[2].set_ylim(0, 1.1)
-    for i, v in enumerate([lr_score, rf_score]):
-        axes[2].text(i, v + 0.03, f"{v:.3f} ({v*100:.1f}%)", ha='center', fontweight='bold')
+    axes[2].set_ylim(0, 1.15)
+    axes[2].text(0, rf_score + 0.03, f"{rf_score:.4f} ({rf_score*100:.1f}%)", ha='center', fontweight='bold', fontsize=12)
 
-    plt.suptitle('Performance Metric Comparison: Linear Regression vs Random Forest', fontsize=14, fontweight='bold', y=1.05)
+    plt.suptitle('Random Forest Regressor: Evaluation Metrics Scorecard', fontsize=14, fontweight='bold', y=1.03)
     plt.tight_layout()
     plt.savefig(os.path.join('static', 'charts', 'model_comparison.png'), dpi=200, bbox_inches='tight')
     plt.close()
 
-    print("[+] All presentation charts generated and saved in static/charts/")
+    print("[+] All presentation charts generated and saved in static/charts/", flush=True)
 
 if __name__ == '__main__':
     train_and_evaluate()

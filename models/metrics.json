@@ -1,15 +1,11 @@
 {
-    "Linear Regression": {
-        "MAE": 9.15,
-        "RMSE": 13.64,
-        "R2": 0.8761,
-        "Accuracy_Pct": 87.6
-    },
     "Random Forest Regressor": {
         "MAE": 7.27,
         "RMSE": 10.88,
         "R2": 0.9213,
-        "Accuracy_Pct": 92.1
+        "Accuracy_Pct": 92.1,
+        "Estimators": 100,
+        "Max_Depth": 12
     },
     "Total_Samples": 3000,
     "Train_Samples": 2400,

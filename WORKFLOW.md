@@ -3,7 +3,7 @@
 ### **AI Experiential Learning Event | Group 3**
 - **AI Concept:** Supervised Machine Learning – Regression
 - **Target Variable:** Delivery Time (Minutes / Hours)
-- **Algorithms:** Linear Regression vs. Random Forest Regressor
+- **Algorithm:** Random Forest Regressor
 - **Tools:** Python, Scikit-learn, Pandas, NumPy, Matplotlib, Seaborn, Flask
 
 ---
@@ -38,30 +38,28 @@
 |    - 2,400 Training Records | 600 Testing Records           |
 +-------------------------------------------------------------+
                               │
-             ┌────────────────┴────────────────┐
-             ▼                                 ▼
-+--------------------------+     +--------------------------+
-|  Model 1: Linear Reg     |     |  Model 2: Random Forest  |
-|  - Baseline Regressor    |     |  - 100 Estimators        |
-|  - Fits linear trend     |     |  - Non-linear ensemble   |
-+--------------------------+     +--------------------------+
-             │                                 │
-             └────────────────┬────────────────┘
                               ▼
 +-------------------------------------------------------------+
-|               Model Evaluation & Comparison                 |
-|    - Mean Absolute Error (MAE)                              |
-|    - Root Mean Squared Error (RMSE)                         |
-|    - R² Score (Variance Explained)                          |
+|          Supervised Model: Random Forest Regressor          |
+|    - 100 Decision Trees Ensemble (max_depth=12)             |
+|    - Captures non-linear compounding delays                 |
+|    - Bootstrap aggregation for robust variance reduction    |
++-------------------------------------------------------------+
+                              │
+                              ▼
++-------------------------------------------------------------+
+|               Model Evaluation & Performance                |
+|    - Mean Absolute Error (MAE): 7.27 mins                   |
+|    - Root Mean Squared Error (RMSE): 10.88 mins             |
+|    - R² Score (Variance Explained): 92.13%                  |
 +-------------------------------------------------------------+
                               │
                               ▼
 +-------------------------------------------------------------+
 |              Interactive Web Demonstration App              |
-|    - Live Sliders & Real-Time Parameter Adjustment          |
-|    - Side-by-Side Model Prediction Output                   |
-|    - Estimated Arrival Time (ETA) Calculation               |
-|    - Embedded Presentation & Viva Q&A Guide                 |
+|    - Real-Time Sliders & Parameter Customization            |
+|    - Instant AI Prediction & ETA Calculation                |
+|    - High-Resolution Feature Importance & EDA Visuals       |
 +-------------------------------------------------------------+
 ```
 
@@ -95,7 +93,7 @@
 
 ### 3. Exploratory Data Analysis & Visualizations
 High-resolution plots automatically saved to [`static/charts/`](static/charts/):
-- **`actual_vs_predicted.png`**: Scatter plot showing actual delivery time versus model predictions.
+- **`actual_vs_predicted.png`**: Scatter plot showing actual delivery time versus Random Forest predictions ($R^2 = 0.921$).
 - **`correlation_heatmap.png`**: Feature correlation matrix highlighting primary drivers of delivery time.
 - **`traffic_weather_impact.png`**: Boxplots quantifying delays caused by severe traffic jams and storms.
 - **`feature_importance.png`**: Ranking of top 10 features via Random Forest Gini impurity reduction.
@@ -106,27 +104,21 @@ High-resolution plots automatically saved to [`static/charts/`](static/charts/):
 ### 4. Regression Model Training
 Data is split into **80% training (2,400 samples)** and **20% testing (600 samples)**:
 
-1. **Model 1: Linear Regression (Baseline)**
-   - Establishes a standard linear hyperplane relationship:
-     $$\hat{y} = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \dots + \beta_n x_n$$
-   - Solved via ordinary least squares (OLS).
-
-2. **Model 2: Random Forest Regressor (Champion)**
-   - An ensemble of 100 decision trees (`n_estimators=100`, `max_depth=12`).
-   - Aggregates predictions across randomized bootstrapped subsets, capturing non-linear interactions (e.g., how rain compounds traffic delays).
+**Model: Random Forest Regressor**
+- An ensemble of 100 decision trees (`n_estimators=100`, `max_depth=12`).
+- Aggregates predictions across randomized bootstrapped subsets, capturing non-linear interactions (e.g., how rain compounds traffic delays).
 
 ---
 
 ### 5. Model Evaluation Results
 
-| Performance Metric | Linear Regression | Random Forest Regressor | Advantage |
-| :--- | :---: | :---: | :--- |
-| **Mean Absolute Error (MAE)** | 9.15 mins | **7.27 mins** | **20.5% lower error** |
-| **Root Mean Squared Error (RMSE)** | 13.64 mins | **10.88 mins** | **20.2% lower error** |
-| **$R^2$ Score (Accuracy)** | 0.8761 (87.6%) | **0.9213 (92.1%)** | **+4.5% higher variance explained** |
+| Performance Metric | Random Forest Regressor Result | Practical Significance |
+| :--- | :---: | :--- |
+| **Mean Absolute Error (MAE)** | **7.27 mins** | Predictions deviate by only ~7.2 mins on average across all shipments |
+| **Root Mean Squared Error (RMSE)** | **10.88 mins** | Low dispersion with strong resilience against extreme outlier errors |
+| **$R^2$ Score (Accuracy)** | **0.9213 (92.1%)** | Over 92% of the variance in logistics delivery duration is explained |
 
-Serialized models are saved in:
-- [`models/linear_regression_model.pkl`](models/linear_regression_model.pkl)
+Serialized model saved in:
 - [`models/random_forest_model.pkl`](models/random_forest_model.pkl)
 - [`models/metrics.json`](models/metrics.json)
 
@@ -139,9 +131,8 @@ Serialized models are saved in:
   - Real-time sliders for distance, prep time, and weight.
   - Dropdown selectors for vehicle, weather, traffic, and hub.
   - One-click presets: *Urban Express*, *Rush-Hour Rain*, *Intercity Cargo*.
-  - Instant side-by-side comparison between Linear Regression and Random Forest.
-  - Real-time calculated arrival clock timestamp (ETA).
-  - Built-in EDA gallery tab and viva question walkthrough.
+  - Instant high-accuracy Random Forest prediction and real-time arrival clock timestamp (ETA).
+  - Built-in EDA gallery tab.
 
 ---
 
@@ -156,6 +147,6 @@ Serialized models are saved in:
 | Action | Terminal Command |
 | :--- | :--- |
 | **1. Generate Dataset** | `python generate_data.py` |
-| **2. Train Models & Generate Plots** | `python train_and_evaluate.py` |
+| **2. Train Model & Generate Plots** | `python train_and_evaluate.py` |
 | **3. Run Interactive Demo App** | `python app.py` *(or double-click `run_demo.bat`)* |
 | **4. Open Web Interface** | Visit `http://127.0.0.1:5000` in browser |

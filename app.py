@@ -15,27 +15,23 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
 
 app = Flask(__name__)
 
-# Load trained models
+# Load trained Random Forest model
 models_dir = os.path.join(os.path.dirname(__file__), 'models')
-lr_model_path = os.path.join(models_dir, 'linear_regression_model.pkl')
 rf_model_path = os.path.join(models_dir, 'random_forest_model.pkl')
 metrics_path = os.path.join(models_dir, 'metrics.json')
 
-lr_model = None
 rf_model = None
 metrics_data = {}
 
 try:
-    if os.path.exists(lr_model_path):
-        lr_model = joblib.load(lr_model_path)
     if os.path.exists(rf_model_path):
         rf_model = joblib.load(rf_model_path)
     if os.path.exists(metrics_path):
         with open(metrics_path, 'r') as f:
             metrics_data = json.load(f)
-    print("[+] Models and metrics loaded successfully.")
+    print("[+] Random Forest model and metrics loaded successfully.")
 except Exception as e:
-    print(f"[-] Error loading models: {e}")
+    print(f"[-] Error loading model: {e}")
 
 def format_minutes_to_readable(minutes):
     """Converts minutes into 'X hrs Y mins' string."""
@@ -77,22 +73,15 @@ def predict():
             'Warehouse': warehouse
         }])
 
-        # Predict with Linear Regression
-        lr_pred_min = float(lr_model.predict(input_df)[0]) if lr_model else 0.0
         # Predict with Random Forest Regressor
         rf_pred_min = float(rf_model.predict(input_df)[0]) if rf_model else 0.0
 
         # Clip predictions to reasonable positive bound
-        lr_pred_min = max(10.0, round(lr_pred_min, 1))
         rf_pred_min = max(10.0, round(rf_pred_min, 1))
 
         # Calculate estimated delivery timestamp
         now = datetime.now()
         rf_eta = (now + timedelta(minutes=rf_pred_min)).strftime("%I:%M %p")
-        lr_eta = (now + timedelta(minutes=lr_pred_min)).strftime("%I:%M %p")
-
-        # Difference
-        diff_min = round(abs(rf_pred_min - lr_pred_min), 1)
 
         response = {
             'status': 'success',
@@ -111,25 +100,15 @@ def predict():
                 'hours': round(rf_pred_min / 60.0, 2),
                 'formatted': format_minutes_to_readable(rf_pred_min),
                 'eta': rf_eta,
-                'r2_score': metrics_data.get('Random Forest Regressor', {}).get('R2', 0.921),
-                'mae': metrics_data.get('Random Forest Regressor', {}).get('MAE', 7.27)
+                'r2_score': metrics_data.get('Random Forest Regressor', {}).get('R2', 0.9213),
+                'mae': metrics_data.get('Random Forest Regressor', {}).get('MAE', 7.27),
+                'rmse': metrics_data.get('Random Forest Regressor', {}).get('RMSE', 10.88),
+                'accuracy_pct': metrics_data.get('Random Forest Regressor', {}).get('Accuracy_Pct', 92.1)
             },
-            'linear_regression': {
-                'minutes': lr_pred_min,
-                'hours': round(lr_pred_min / 60.0, 2),
-                'formatted': format_minutes_to_readable(lr_pred_min),
-                'eta': lr_eta,
-                'r2_score': metrics_data.get('Linear Regression', {}).get('R2', 0.876),
-                'mae': metrics_data.get('Linear Regression', {}).get('MAE', 9.15)
-            },
-            'comparison': {
-                'diff_minutes': diff_min,
-                'faster_model': 'Random Forest' if rf_pred_min < lr_pred_min else 'Linear Regression',
-                'explanation': (
-                    "Random Forest accounts for non-linear compounding delays (like severe traffic jams combined with stormy weather), "
-                    "whereas Linear Regression applies a fixed additive penalty."
-                )
-            }
+            'model_insight': (
+                "Random Forest accurately models non-linear logistics dynamics, such as severe traffic congestion "
+                "compounded by rainy weather, vehicle capacity, and fulfillment dispatch delays."
+            )
         }
         return jsonify(response)
     except Exception as e:
